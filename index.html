@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>墨叔西语点读机</title>
+    <style>
+        body {
+            font-family: 微软雅黑, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 15px;
+            background: #fff8e6;
+            position: relative;
+        }
+        .input-area {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .input-area .tip {
+            width: calc(100% - 40px);
+            margin-bottom: 10px;
+            text-align: left;
+            color: #666;
+            font-size: 14px;
+        }
+        #contentInput {
+            width: calc(100% - 40px);
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            margin-bottom: 10px;
+            align-self: center;
+            font-size: 14px;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+        select {
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .sentence-list {
+            margin-top: 20px;
+        }
+        .sentence-item {
+            background: #fff;
+            padding: 15px 0;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .spanish-input {
+            color: #1976d2;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .translation-input {
+            font-size: 14px;
+            color: #333;
+        }
+        .sentence-item.highlight {
+            background: #e3f2fd;
+            box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+        }
+        .edit-input {
+            width: calc(100% - 40px);
+            max-width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 40px;
+            outline: none;
+        }
+        .sentence-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: calc(100% - 40px);
+        }
+        .play-btn {
+            background: #2196f3;
+            color: #fff;
+        }
+        .edit-btn {
+            background: #ff9800;
+            color: #fff;
+        }
+        .single-loop-btn {
+            background: #9c27b0;
+            color: #fff;
+        }
+        .save-btn {
+            background: #4caf50;
+            color: #fff;
+            margin-left: 8px;
+        }
+        .rename-btn {
+            background: #00acc1;
+            color: #fff;
+        }
+        .export-btn {
+            background: #795548;
+            color: #fff;
+        }
+        .collect-toggle-btn {
+            background: #f44336;
+            color: #fff;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 100;
+        }
+        .grammar-btn {
+            background: #009688;
+            color: #fff;
+        }
+        .whole-btn-group {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .read-mode-btn {
+            background: #ff5722;
+            color: #fff;
+            margin-left: 8px;
+        }
+        .api-tip {
+            color: #ff5722;
+            font-size: 13px;
+            margin-top: 5px;
+            width: calc(100% - 40px);
+            text-align: left;
+        }
+        .collection-area {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+        .collection-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .collection-item {
+            padding: 12px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            transition: background 0.2s;
+        }
+        .collection-item:hover {
+            background: #f9f9;
+        }
+        .collection-item:active {
+            cursor: grabbing;
+        }
+        .collection-name {
+            flex: 1;
+        }
+        .collection-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .drag-handle {
+            margin-right: 10px;
+            color: #999;
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 12px;
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding-bottom:8px;
+            border-bottom:1px solid #eee;
+        }
+        .grammar-toolbar {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-left: auto;
+        }
+        .grammar-edit-input {
+            flex:1;
+            margin-top:10px;
+            padding:12px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            min-height:220px;
+            overflow:auto;
+            outline:none;
+            white-space:pre-wrap;
+            background-color: #ffffff;
+        }
+        .grammar-edit-input[contenteditable="false"] {
+            cursor: default;
+        }
+        .grammar-edit-input[contenteditable="true"] {
+            border: 1px solid #2196f3;
+        }
+        .modal-footer {
+            display:flex;
+            gap:8px;
+            justify-content:flex-end;
+            padding-top:10px;
+            border-top:1px solid #eee;
+            margin-top:10px;
+        }
+        .color-btn {
+            padding:6px 10px;
+            border-radius:4px;
+            cursor:pointer;
+            border:1px solid #ddd;
+            background:#fff;
+        }
+        .color-btn:disabled {
+            background-color: #f0f0f0;
+            color: #999;
+            border-color: #ccc;
+        }
+        ::selection {
+            background: #e3f2fd;
+        }
+        .top-float-bar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 9999;
+            width: 250px;
+            justify-content: center;
+        }
+        .top-float-bar select, .top-float-bar button {
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+        .cancel-edit-btn {
+            background: #ff5722;
+            color: #fff;
+        }
+        .auto-close-alert {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 80%;
+            text-align: center;
+            animation: fadeInOut 3s forwards;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: 500;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+        .search-highlight {
+            background-color: #ffff00;
+            color: #000;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .search-area {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        #searchTextInput {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-btn {
+            background: #2196f3;
+            color: #fff;
+        }
+        .clear-search-btn {
+            background: #f44336;
+            color: #fff;
+        }
+        .search-result {
+            font-size: 13px;
+            color: #666;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>墨叔西语点读机</h1>
+    <button id="collectToggleBtn" class="collect-toggle-btn">我的收藏</button>
+
+    <div class="top-float-bar" id="topFloatBar" style="display:none;">
+        <select id="floatColorSelect">
+            <option value="#2196f3">蓝色</option>
+            <option value="#f44336">红色</option>
+            <option value="#4caf50">绿色</option>
+            <option value="#ff9800">橙色</option>
+            <option value="#9c27b0">紫色</option>
+        </select>
+        <button id="addStyleBtn">添加下划线</button>
+        <button id="cancelEditBtn" class="cancel-edit-btn">取消编辑</button>
+    </div>
+
+    <div class="collection-area" id="collectionArea">
+        <div class="collection-header">
+            <h3>我的收藏</h3>
+            <input type="text" id="collectionSearchInput" class="search-input" placeholder="搜索文章标题...">
+            <button id="saveSortBtn" class="save-btn" style="display:none;">保存排序</button>
+        </div>
+        <div id="collectionList" class="collection-list"></div>
+        <div class="sort-hint">提示：按住文章左侧拖拽可调整顺序，调整后点击「保存排序」生效</div>
+    </div>
+
+    <div class="input-area">
+        <div class="tip">粘贴格式：每句基础格式"西语→翻译"（2行，允许空行间隔），可选添加"语法分析"（第3行，前缀含"语法分析"）</div>
+        <textarea id="contentInput" placeholder="请粘贴西语句子、翻译（可选语法分析），按格式排列即可"></textarea>
+        <div style="display:flex; gap:8px; width:calc(100% - 40px);">
+            <button id="parseBtn">生成内容</button>
+            <button id="saveBtn" class="save-btn">保存文章</button>
+        </div>
+        <div class="api-tip">提示：谷歌TTS需外网，微软原生语音无需网络</div>
+    </div>
+
+    <div class="whole-btn-group">
+        <label>TTS：</label>
+        <select id="ttsEngineSelect">
+            <option value="web-speech">微软</option>
+            <option value="google-tts">谷歌</option>
+        </select>
+
+        <button id="readAllBtn" disabled>整篇朗读</button>
+        <button id="wholePlayModeBtn" disabled>整篇单次</button>
+        <button id="readModeBtn" class="read-mode-btn" disabled>当前：只读句子</button>
+        <label>语速：</label>
+        <select id="rateSelect">
+            <option value="0.2">0.2倍</option>
+            <option value="0.3">0.3倍</option>
+            <option value="0.5">0.5倍</option>
+            <option value="0.6">0.6倍</option>
+            <option value="0.8">0.8倍</option>
+            <option value="1" selected>1倍</option>
+            <option value="1.2">1.2倍</option>            
+            <option value="1.4">1.4倍</option>
+            <option value="1.6">1.6倍</option>
+            <option value="1.8">1.8倍</option>
+            <option value="2">2倍</option>
+        </select>
+        <label>口音：</label>
+        <select id="voiceSelect">
+            <option value="es-ES">西班牙</option>
+            <option value="es-MX">墨西哥</option>
+            <option value="es-US">美国</option>
+            <option value="zh-CN">中文</option>
+        </select>
+    </div>
+
+    <div class="search-area">
+        <input type="text" id="searchTextInput" placeholder="模糊搜索：输入多个词自动拆分匹配">
+        <button id="searchBtn" class="search-btn">搜索</button>
+        <button id="clearSearchBtn" class="clear-search-btn">清除高亮</button>
+        <span id="searchResult" class="search-result"></span>
+    </div>
+
+    <div class="sentence-list" id="sentenceList"></div>
+
+    <div id="grammarModal" class="modal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="grammarTitle">
+            <div class="modal-header">
+                <h3 id="grammarTitle" style="margin:0;">语法分析</h3>
+                <div class="grammar-toolbar">
+                    <button id="startGrammarEditBtn" class="edit-btn">开始编辑</button>
+                    <label style="font-size:13px; color:#666;">颜色：</label>
+                    <select id="grammarColorSelect" class="color-select" disabled>
+                        <option value="#2196f3">蓝色</option>
+                        <option value="#f44336">红色</option>
+                        <option value="#4caf50">绿色</option>
+                        <option value="#ff9800">橙色</option>
+                        <option value="#9c27b0">紫色</option>
+                        <option value="#000000">黑色</option>
+                    </select>
+                    <button id="grammarUnderlineBtn" class="color-btn" disabled>下划线</button>
+                    <button id="grammarColorApplyBtn" class="color-btn" disabled>应用颜色</button>
+                    <button id="grammarClearStyleBtn" class="color-btn" disabled>清除样式</button>
+                </div>
+            </div>
+            <div id="currentSentenceDisplay" style="padding:8px; background:#f5f5f5; border-radius:4px; margin:10px 0;"></div>
+            <div id="grammarContentEditable" class="grammar-edit-input" contenteditable="false" aria-label="语法分析内容编辑区"></div>
+            <div class="modal-footer">
+                <button id="cancelGrammarBtn">取消</button>
+                <button id="confirmGrammarBtn" class="save-btn" disabled>确认保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isPaused = false;
+        let currentAudio = null;
+        let currentSentenceIndex = 0;
+        let wholePlayMode = 'single';
+        let singleSentenceLoopMap = new Map();
+        let activeSentenceIdx = -1;
+        let readMode = 'only-sentence';
+        let collections = JSON.parse(localStorage.getItem('ttsArticleCollections')) || [];
+        let grammarData = new Map();
+        let currentEditIdx = -1;
+        let isEditing = false;
+        let currentGrammarIdx = -1;
+        let isGrammarEditing = false;
+        let voiceCache = [];
+        let isWholePlaying = false;
+        let lastParseRawText = "";
+        let currentTTSEngine = "web-speech";
+        let googleAudio = null;
+
+        const topFloatBar = document.getElementById('topFloatBar');
+        const editBtnList = [];
+        const collectionArea = document.getElementById('collectionArea');
+        const collectToggleBtn = document.getElementById('collectToggleBtn');
+        const grammarModal = document.getElementById('grammarModal');
+        const grammarContentEditable = document.getElementById('grammarContentEditable');
+        let originalContent = { spanish: '', translation: '' };
+
+        window.speechSynthesis.onvoiceschanged = () => voiceCache = window.speechSynthesis.getVoices();
+
+        function showAutoCloseAlert(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'auto-close-alert';
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.parentNode && alertDiv.parentNode.removeChild(alertDiv), 3000);
+        }
+
+        function initialize() {
+            renderCollectionList();
+            bindSearchEvent();
+            initDragAndDrop();
+            bindReadModeEvent();
+            bindGrammarModalEvents();
+            bindFloatBarEvents();
+            bindCollectToggleEvent();
+            bindDeleteKeyEvent();
+            bindParseButton();
+            bindSaveButton();
+            bindWholePlayButtons();
+            bindTextSearchEvents();
+            bindTTSEngineSelect();
+        }
+
+        function bindTTSEngineSelect() {
+            const select = document.getElementById('ttsEngineSelect');
+            select.addEventListener('change', () => {
+                currentTTSEngine = select.value;
+                stopAllAudio();
+                if(currentTTSEngine === "google-tts"){
+                    showAutoCloseAlert("已切换谷歌TTS，需要外网访问谷歌接口");
+                }else{
+                    showAutoCloseAlert("已切换浏览器原生语音，无需网络");
+                }
+            })
+        }
+
+        function stopAllAudio() {
+            window.speechSynthesis.cancel();
+            if(googleAudio){
+                googleAudio.pause();
+                googleAudio.src = "";
+                googleAudio = null;
+            }
+            currentAudio = null;
+            activeSentenceIdx = -1;
+            isPaused = false;
+        }
+
+        function pauseAllAudio() {
+            if (currentTTSEngine === "web-speech") {
+                window.speechSynthesis.pause();
+            } else {
+                if (googleAudio) googleAudio.pause();
+            }
+            isPaused = true;
+        }
+
+        function resumeAllAudio() {
+            if (currentTTSEngine === "web-speech") {
+                window.speechSynthesis.resume();
+            } else {
+                if (googleAudio) googleAudio.play();
+            }
+            isPaused = false;
+        }
+
+        function bindTextSearchEvents() {
+            const searchBtn = document.getElementById('searchBtn');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const searchInput = document.getElementById('searchTextInput');
+            const resultDisplay = document.getElementById('searchResult');
+
+            searchBtn.addEventListener('click', () => {
+                let rawKeyword = searchInput.value.trim();
+                if (!rawKeyword) {
+                    showAutoCloseAlert('请输入搜索文本');
+                    return;
+                }
+                clearSearchHighlight();
+                const cleanStr = rawKeyword.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+                const keywords = cleanStr.split(' ').filter(w => w.length > 0);
+                let totalMatch = 0;
+                const sentenceItems = document.querySelectorAll('.sentence-item');
+                sentenceItems.forEach(item => {
+                    const spanishEl = item.querySelector('.spanish-input');
+                    const translationEl = item.querySelector('.translation-input');
+                    keywords.forEach(word => {
+                        if (spanishEl.innerHTML.includes(word)) {
+                            spanishEl.innerHTML = highlightMultiWord(spanishEl.innerHTML, word);
+                        }
+                        if (translationEl.innerHTML.includes(word)) {
+                            translationEl.innerHTML = highlightMultiWord(translationEl.innerHTML, word);
+                        }
+                    });
+                    const count1 = (spanishEl.innerHTML.match(/search-highlight/g) || []).length;
+                    const count2 = (translationEl.innerHTML.match(/search-highlight/g) || []).length;
+                    totalMatch += count1 + count2;
+                });
+                resultDisplay.textContent = `共匹配 ${totalMatch} 处关键词`;
+                if (totalMatch > 0) {
+                    const first = document.querySelector('.search-highlight');
+                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    showAutoCloseAlert(`搜索完成，命中${totalMatch}处`);
+                } else {
+                    showAutoCloseAlert('未匹配任何关键词');
+                }
+            });
+            clearBtn.addEventListener('click', () => {
+                clearSearchHighlight();
+                searchInput.value = '';
+                resultDisplay.textContent = '';
+                showAutoCloseAlert('已清除所有高亮');
+            });
+            searchInput.addEventListener('keypress', e => e.key === 'Enter' && searchBtn.click());
+        }
+        function highlightMultiWord(html, word) {
+            const escape = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const reg = new RegExp(`(${escape})(?![^<]*>)`, 'gi');
+            return html.replace(reg, '<span class="search-highlight">$1</span>');
+        }
+        function clearSearchHighlight() {
+            document.querySelectorAll('.search-highlight').forEach(span => {
+                const p = span.parentNode;
+                while (span.firstChild) p.insertBefore(span.firstChild, span);
+                span.remove();
+            });
+        }
+
+        function bindSearchEvent() {
+            document.getElementById('collectionSearchInput').addEventListener('input', e => {
+                const kw = e.target.value.toLowerCase();
+                document.querySelectorAll('.collection-item').forEach(item => {
+                    const name = item.querySelector('.collection-name').textContent.toLowerCase();
+                    item.style.display = name.includes(kw) ? 'flex' : 'none';
+                });
+            });
+        }
+
+        function initDragAndDrop() {
+            const list = document.getElementById('collectionList');
+            let dragged = null;
+            list.addEventListener('dragstart', e => {
+                if (e.target.classList.contains('collection-item')) {
+                    dragged = e.target;
+                    setTimeout(() => dragged.style.opacity = '0.5', 0);
+                }
+            });
+            list.addEventListener('dragend', () => {
+                if (dragged) {
+                    dragged.style.opacity = '1';
+                    dragged = null;
+                    document.getElementById('saveSortBtn').style.display = 'block';
+                }
+            });
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                if (!dragged) return;
+                const after = getDragAfterEl(list, e.clientY);
+                after ? list.insertBefore(dragged, after) : list.appendChild(dragged);
+            });
+            document.getElementById('saveSortBtn').addEventListener('click', () => {
+                const items = Array.from(list.querySelectorAll('.collection-item'));
+                const newColl = items.map(el => collections[+el.querySelector('.rename-btn').dataset.index]);
+                collections = newColl;
+                saveCollections();
+                renderCollectionList();
+                document.getElementById('saveSortBtn').style.display = 'none';
+                showAutoCloseAlert('排序已保存！');
+            });
+            document.querySelectorAll('.collection-item').forEach(i => i.draggable = true);
+        }
+        function getDragAfterEl(container, y) {
+            const els = [...container.querySelectorAll('.collection-item:not(.dragging)')];
+            return els.reduce((c, el) => {
+                const box = el.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                return offset < 0 && offset > c.offset ? { offset, el } : c;
+            }, { offset: Number.NEGATIVE_INFINITY }).el;
+        }
+
+        function bindReadModeEvent() {
+            const btn = document.getElementById('readModeBtn');
+            btn.addEventListener('click', () => {
+                if (readMode === 'only-sentence') {
+                    readMode = 'only-translation';
+                    btn.textContent = '当前模式：中文';
+                } else if (readMode === 'only-translation') {
+                    readMode = 'sentence-then-translation';
+                    btn.textContent = '当前模式：中文+西语';
+                } else {
+                    readMode = 'only-sentence';
+                    btn.textContent = '当前模式：西语';
+                }
+                showAutoCloseAlert('朗读模式已切换');
+            });
+        }
+
+        function bindCollectToggleEvent() {
+            collectToggleBtn.addEventListener('click', () => {
+                const show = collectionArea.style.display !== 'block';
+                collectionArea.style.display = show ? 'block' : 'none';
+                collectToggleBtn.textContent = show ? '收起收藏' : '我的收藏';
+            });
+        }
+
+        function bindGrammarModalEvents() {
+            const editBtn = document.getElementById('startGrammarEditBtn');
+            editBtn.addEventListener('click', () => {
+                if (isGrammarEditing) {
+                    grammarContentEditable.contentEditable = false;
+                    isGrammarEditing = false;
+                    editBtn.textContent = '开始编辑';
+                    ['grammarColorSelect','grammarUnderlineBtn','grammarColorApplyBtn','grammarClearStyleBtn']
+                        .map(id=>document.getElementById(id)).forEach(el=>el.disabled=true);
+                    document.getElementById('confirmGrammarBtn').disabled = true;
+                } else {
+                    grammarContentEditable.contentEditable = true;
+                    isGrammarEditing = true;
+                    editBtn.textContent = '取消编辑';
+                    ['grammarColorSelect','grammarUnderlineBtn','grammarColorApplyBtn','grammarClearStyleBtn']
+                        .map(id=>document.getElementById(id)).forEach(el=>el.disabled=false);
+                    document.getElementById('confirmGrammarBtn').disabled = false;
+                    grammarContentEditable.focus();
+                    placeCaretAtEnd(grammarContentEditable);
+                }
+            });
+
+            document.getElementById('cancelGrammarBtn').addEventListener('click', () => {
+                closeGrammarModal();
+                isEditing = false;
+                currentEditIdx = -1;
+                editBtnList.forEach(b => b.disabled = false);
+            });
+
+            window.addEventListener('click', e=>{
+                if(e.target === grammarModal) {
+                    closeGrammarModal();
+                    isEditing = false;
+                    currentEditIdx = -1;
+                    editBtnList.forEach(b => b.disabled = false);
+                }
+            });
+
+            document.getElementById('confirmGrammarBtn').addEventListener('click', () => {
+                if (currentGrammarIdx === -1) return;
+                const html = grammarContentEditable.innerHTML.trim();
+                grammarData.set(currentGrammarIdx, html);
+                closeGrammarModal();
+                isEditing = false;
+                currentEditIdx = -1;
+                editBtnList.forEach(b => b.disabled = false);
+                showAutoCloseAlert(html ? '语法已保存' : '语法已清空');
+            });
+
+            document.getElementById('grammarUnderlineBtn').onclick = ()=>{
+                if(!isGrammarEditing) return showAutoCloseAlert('请先开启编辑');
+                applyStyle({textDecoration:'underline'});
+            };
+            document.getElementById('grammarColorApplyBtn').onclick = ()=>{
+                if(!isGrammarEditing) return showAutoCloseAlert('请先开启编辑');
+                applyStyle({color:document.getElementById('grammarColorSelect').value});
+            };
+            document.getElementById('grammarClearStyleBtn').onclick = ()=>{
+                if(!isGrammarEditing) return showAutoCloseAlert('请先开启编辑');
+                clearSelStyle();
+            };
+        }
+        function closeGrammarModal() {
+            grammarModal.style.display = 'none';
+            isGrammarEditing = false;
+            currentGrammarIdx = -1;
+            const editBtn = document.getElementById('startGrammarEditBtn');
+            editBtn.textContent = '开始编辑';
+            ['grammarColorSelect','grammarUnderlineBtn','grammarColorApplyBtn','grammarClearStyleBtn']
+                .map(id=>document.getElementById(id)).forEach(el=>el.disabled=true);
+            document.getElementById('confirmGrammarBtn').disabled = true;
+        }
+        function applyStyle(obj) {
+            const sel = window.getSelection();
+            if(!sel.rangeCount || sel.isCollapsed) return showAutoCloseAlert('先选中文字');
+            const r = sel.getRangeAt(0);
+            if(!grammarContentEditable.contains(r.commonAncestorContainer)) return showAutoCloseAlert('仅可编辑语法区文字');
+            const span = document.createElement('span');
+            if(obj.color) span.style.color = obj.color;
+            if(obj.textDecoration) span.style.textDecoration = obj.textDecoration;
+            span.appendChild(r.extractContents());
+            r.insertNode(span);
+            sel.removeAllRanges();
+        }
+        function clearSelStyle() {
+            const sel = window.getSelection();
+            if(!sel.rangeCount || sel.isCollapsed) return;
+            const r = sel.getRangeAt(0);
+            if(!grammarContentEditable.contains(r.commonAncestorContainer)) return;
+            const frag = r.cloneContents();
+            frag.querySelectorAll('span').forEach(s=>{
+                while(s.firstChild) s.parentNode.insertBefore(s.firstChild,s);
+                s.remove();
+            });
+            r.deleteContents();
+            r.insertNode(document.createTextNode(frag.textContent));
+            sel.removeAllRanges();
+        }
+        function placeCaretAtEnd(el) {
+            el.focus();
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            r.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(r);
+        }
+
+        function bindFloatBarEvents() {
+            document.getElementById('addStyleBtn').addEventListener('click', () => {
+                if (!isEditing || currentEditIdx < 0) return showAutoCloseAlert('先进入编辑模式');
+                const sel = window.getSelection();
+                if (!sel.rangeCount || sel.isCollapsed) return showAutoCloseAlert('选中文字');
+                const r = sel.getRangeAt(0);
+                const node = sel.anchorNode.parentElement;
+                if (!node.classList.contains('spanish-input') && !node.classList.contains('translation-input'))
+                    return showAutoCloseAlert('仅能修改西语/翻译文本');
+                const span = document.createElement('span');
+                span.style.color = document.getElementById('floatColorSelect').value;
+                span.style.textDecoration = 'underline';
+                span.append(...r.extractContents().childNodes);
+                r.insertNode(span);
+                sel.removeAllRanges();
+            });
+            document.getElementById('cancelEditBtn').addEventListener('click', () => {
+                if (!isEditing) return showAutoCloseAlert('未处于编辑');
+                if (!confirm('取消编辑，未保存内容将丢失？')) return;
+                const sp = document.querySelectorAll('.spanish-input')[currentEditIdx];
+                const tr = document.querySelectorAll('.translation-input')[currentEditIdx];
+                sp.innerHTML = originalContent.spanish;
+                tr.innerHTML = originalContent.translation;
+                sp.contentEditable = tr.contentEditable = false;
+                topFloatBar.style.display = 'none';
+                editBtnList.forEach(b => { b.disabled = false; b.textContent = '编辑'; });
+                isEditing = false;
+                currentEditIdx = -1;
+                showAutoCloseAlert('编辑已取消');
+            });
+        }
+
+        function bindDeleteKeyEvent() {
+            document.addEventListener('keydown', e => {
+                if (e.key !== 'Backspace' || !isEditing) return;
+                if (grammarContentEditable.contains(e.target) && !isGrammarEditing) {
+                    e.preventDefault();
+                    return showAutoCloseAlert('语法区请先开启编辑');
+                }
+                const sel = window.getSelection();
+                const node = sel.focusNode;
+                const wrap = findStyleWrap(node);
+                if (wrap) {
+                    e.preventDefault();
+                    unwrapSpan(wrap);
+                }
+            });
+        }
+        function findStyleWrap(node) {
+            let curr = node.nodeType === 3 ? node.parentNode : node;
+            while (curr && !curr.classList.contains('edit-input') && !curr.classList.contains('grammar-edit-input')) {
+                if (curr.tagName === 'SPAN' && (curr.style.color || curr.style.textDecoration)) return curr;
+                curr = curr.parentNode;
+            }
+            return null;
+        }
+        function unwrapSpan(el) {
+            const p = el.parentNode;
+            while (el.firstChild) p.insertBefore(el.firstChild, el);
+            el.remove();
+        }
+
+        function bindParseButton() {
+            document.getElementById('parseBtn').addEventListener('click', () => {
+                const raw = document.getElementById('contentInput').value.trim();
+                if (!raw) return showAutoCloseAlert('请输入文本');
+                lastParseRawText = raw;
+                const lines = raw.replace(/\r\n/g,'\n').split('\n').map(s=>s.trim()).filter(s=>s);
+                const listEl = document.getElementById('sentenceList');
+                listEl.innerHTML = '';
+                grammarData.clear();
+                editBtnList.length = 0;
+                let i = 0, idx = 0;
+                const total = lines.length;
+                while (i < total) {
+                    if (i+1 >= total) return showAutoCloseAlert('格式错误，缺少翻译'), listEl.innerHTML='';
+                    const es = lines[i];
+                    const cn = lines[i+1];
+                    let gram = '';
+                    if (i+2 < total && lines[i+2].includes('语法分析')) {
+                        gram = lines[i+2].replace(/语法分析[:：]?/g,'').trim();
+                        i +=3;
+                    } else i +=2;
+                    grammarData.set(idx, gram);
+                    singleSentenceLoopMap.set(idx, false);
+                    const item = document.createElement('div');
+                    item.className = 'sentence-item';
+                    item.id = `sentence-${idx}`;
+                    item.innerHTML = `
+                        <div class="edit-input spanish-input" contenteditable="false">${es}</div>
+                        <div class="edit-input translation-input" contenteditable="false">${cn}</div>
+                        <div class="sentence-controls">
+                            <button class="play-btn" data-idx="${idx}">播放</button>
+                            <button class="single-loop-btn" data-idx="${idx}">单次</button>
+                            <button class="edit-btn" data-idx="${idx}">编辑</button>
+                            <button class="grammar-btn" data-idx="${idx}">语法</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                    idx++;
+                }
+                document.querySelectorAll('#readAllBtn,#wholePlayModeBtn,#readModeBtn').forEach(b=>b.disabled=false);
+                bindSentenceButtons();
+                showAutoCloseAlert(`解析成功，共${idx}条句子`);
+                document.getElementById('contentInput').value = '';
+            });
+        }
+
+        function getCurrentArticleContent() {
+            const sentenceItems = document.querySelectorAll('.sentence-item');
+            if (sentenceItems.length === 0) return '';
+            let content = '';
+            sentenceItems.forEach((item, idx) => {
+                const spanishText = item.querySelector('.spanish-input').textContent.trim();
+                const translationText = item.querySelector('.translation-input').textContent.trim();
+                const grammarText = grammarData.get(idx) || '';
+                content += spanishText + '\n';
+                content += translationText + '\n';
+                if (grammarText) {
+                    content += '语法分析：' + grammarText + '\n';
+                }
+                content += '\n';
+            });
+            return content.trim();
+        }
+
+        function bindSentenceButtons() {
+            editBtnList.length = 0;
+            document.querySelectorAll('.play-btn').forEach(btn=>btn.onclick = ()=>playSingle(+btn.dataset.idx));
+            document.querySelectorAll('.single-loop-btn').forEach(btn=>{
+                btn.onclick = ()=>{
+                    const i = +btn.dataset.idx;
+                    const state = singleSentenceLoopMap.get(i);
+                    singleSentenceLoopMap.set(i, !state);
+                    btn.textContent = state ? '单次' : '循环';
+                    btn.style.background = state ? '#9c27b0' : '#ff5722';
+                    if (!state) playSingle(i);
+                };
+            });
+            document.querySelectorAll('.edit-btn').forEach(btn=>{
+                editBtnList.push(btn);
+                btn.onclick = function(){
+                    const i = +this.dataset.idx;
+                    if(isEditing && currentEditIdx !== i){
+                        return showAutoCloseAlert('请先完成当前编辑');
+                    }
+                    if(isEditing && currentEditIdx === i){
+                        const s = document.querySelectorAll('.spanish-input')[i];
+                        const t = document.querySelectorAll('.translation-input')[i];
+                        s.contentEditable = t.contentEditable = false;
+                        topFloatBar.style.display = 'none';
+                        editBtnList.forEach(b=>{
+                            b.disabled = false;
+                            b.textContent = '编辑';
+                        });
+                        isEditing = false;
+                        currentEditIdx = -1;
+                        showAutoCloseAlert('修改已保存');
+                        return;
+                    }
+                    currentEditIdx = i;
+                    isEditing = true;
+                    const sp = document.querySelectorAll('.spanish-input')[i];
+                    const tr = document.querySelectorAll('.translation-input')[i];
+                    originalContent.spanish = sp.innerHTML;
+                    originalContent.translation = tr.innerHTML;
+                    sp.contentEditable = tr.contentEditable = true;
+                    topFloatBar.style.display = 'flex';
+                    editBtnList.forEach(b=>{
+                        if(b !== this) b.disabled = true;
+                    });
+                    this.textContent = '保存修改';
+                }
+            });
+            document.querySelectorAll('.grammar-btn').forEach(btn=>{
+                btn.onclick = ()=>{
+                    const i = +btn.dataset.idx;
+                    if(isEditing && currentEditIdx !== -1){
+                        return showAutoCloseAlert('请先完成/取消当前内容编辑');
+                    }
+                    currentGrammarIdx = i;
+                    const spText = document.querySelectorAll('.spanish-input')[i].textContent.trim();
+                    document.getElementById('grammarTitle').textContent = `语法分析 - ${spText}`;
+                    document.getElementById('currentSentenceDisplay').textContent = `当前句子：${spText}`;
+                    grammarContentEditable.innerHTML = grammarData.get(i) || '暂无语法分析';
+                    grammarModal.style.display = 'flex';
+                    isGrammarEditing = false;
+                    const editBtn = document.getElementById('startGrammarEditBtn');
+                    editBtn.textContent = '开始编辑';
+                    ['grammarColorSelect','grammarUnderlineBtn','grammarColorApplyBtn','grammarClearStyleBtn']
+                        .map(id=>document.getElementById(id)).forEach(el=>el.disabled=true);
+                    document.getElementById('confirmGrammarBtn').disabled = true;
+                }
+            });
+        }
+
+        function playSingle(idx) {
+            if (isPaused) {
+                resumeAllAudio();
+                return;
+            }
+            stopAllAudio();
+            document.querySelectorAll('.sentence-item').forEach(item=>item.classList.remove('highlight'));
+            activeSentenceIdx = idx;
+            const el = document.getElementById(`sentence-${idx}`);
+            el.classList.add('highlight');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const esText = document.querySelectorAll('.spanish-input')[idx].textContent.trim();
+            const cnText = document.querySelectorAll('.translation-input')[idx].textContent.trim();
+            if (readMode === 'only-translation' && !cnText) {
+                el.classList.remove('highlight');
+                activeSentenceIdx = -1;
+                return showAutoCloseAlert('当前翻译内容为空，无法朗读');
+            }
+            if (readMode === 'only-sentence' && !esText) {
+                el.classList.remove('highlight');
+                activeSentenceIdx = -1;
+                return showAutoCloseAlert('西语文本为空');
+            }
+            const playEnd = () => {
+                if (!isWholePlaying) {
+                    el.classList.remove('highlight');
+                }
+                activeSentenceIdx = -1;
+                currentAudio = null;
+                googleAudio = null;
+                if (singleSentenceLoopMap.get(idx)) setTimeout(()=>playSingle(idx),500);
+                if (isWholePlaying && !isPaused) {
+                    const total = document.querySelectorAll('.sentence-item').length;
+                    let nextIdx = idx + 1;
+                    if (nextIdx >= total) {
+                        if (wholePlayMode === 'loop') {
+                            nextIdx = 0;
+                        } else {
+                            isWholePlaying = false;
+                            document.getElementById('readAllBtn').textContent = '整篇朗读';
+                            document.querySelectorAll('.sentence-item').forEach(item=>item.classList.remove('highlight'));
+                            return;
+                        }
+                    }
+                    setTimeout(() => playSingle(nextIdx), 300);
+                }
+            };
+            if (readMode === 'only-sentence') {
+                speakSafe(esText, document.getElementById('voiceSelect').value, playEnd);
+            } else if (readMode === 'only-translation') {
+                speakSafe(cnText, 'zh-CN', playEnd);
+            } else {
+                speakSafe(esText, document.getElementById('voiceSelect').value, ()=>setTimeout(()=>speakSafe(cnText, 'zh-CN', playEnd), 300));
+            }
+        }
+
+        function speakSafe(text, lang, onEnd) {
+            const rate = parseFloat(document.getElementById('rateSelect').value);
+            if(currentTTSEngine === "web-speech"){
+                const synth = window.speechSynthesis;
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = lang;
+                utter.rate = rate;
+                const voices = voiceCache.length ? voiceCache : synth.getVoices();
+                const matchVoice = voices.find(v => v.lang.startsWith(lang));
+                if (matchVoice) utter.voice = matchVoice;
+                utter.onend = () => onEnd && onEnd();
+                utter.onerror = () => {
+                    showAutoCloseAlert('播放失败');
+                    onEnd && onEnd();
+                };
+                synth.speak(utter);
+                currentAudio = utter;
+            }else{
+                try {
+                    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`;
+                    googleAudio = new Audio(url);
+                    googleAudio.playbackRate = rate;
+                    googleAudio.onended = () => onEnd && onEnd();
+                    googleAudio.onerror = () => {
+                        showAutoCloseAlert('谷歌TTS加载失败，请切换原生语音');
+                        onEnd && onEnd();
+                    }
+                    googleAudio.play();
+                }catch(err){
+                    showAutoCloseAlert('谷歌TTS初始化失败，切换原生语音');
+                    currentTTSEngine = "web-speech";
+                    document.getElementById('ttsEngineSelect').value = "web-speech";
+                    speakSafe(text, lang, onEnd);
+                }
+            }
+        }
+
+        function bindWholePlayButtons() {
+            const readAllBtn = document.getElementById('readAllBtn');
+            const wholePlayModeBtn = document.getElementById('wholePlayModeBtn');
+            wholePlayModeBtn.addEventListener('click', () => {
+                wholePlayMode = wholePlayMode === 'single' ? 'loop' : 'single';
+                wholePlayModeBtn.textContent = wholePlayMode === 'single' ? '整篇单次' : '整篇循环';
+                showAutoCloseAlert(`已切换为${wholePlayMode === 'single' ? '整篇单次' : '整篇循环'}模式`);
+            });
+            readAllBtn.addEventListener('click', () => {
+                const total = document.querySelectorAll('.sentence-item').length;
+                if (total === 0) return showAutoCloseAlert('暂无句子可播放');
+                if (isWholePlaying) {
+                    if (isPaused) {
+                        resumeAllAudio();
+                        readAllBtn.textContent = '停止播放';
+                        showAutoCloseAlert('继续播放');
+                    } else {
+                        pauseAllAudio();
+                        readAllBtn.textContent = '继续播放';
+                        showAutoCloseAlert('已暂停播放');
+                    }
+                    return;
+                }
+                isWholePlaying = true;
+                isPaused = false;
+                readAllBtn.textContent = '停止播放';
+                playSingle(0);
+            });
+        }
+
+        function bindSaveButton() {
+            document.getElementById('saveBtn').addEventListener('click', () => {
+                let content = getCurrentArticleContent();
+                if (!content) content = document.getElementById('contentInput').value.trim();
+                if (!content) content = lastParseRawText.trim();
+                if (!content) return showAutoCloseAlert('请先输入内容或解析文章后再保存');
+                const title = prompt('请输入文章标题', `西语文章${collections.length+1}`);
+                if (!title) return;
+                collections.push({ 
+                    title: title.trim(), 
+                    content: content, 
+                    createTime: new Date().toLocaleString() 
+                });
+                saveCollections();
+                renderCollectionList();
+                showAutoCloseAlert('文章已保存到收藏');
+            });
+        }
+
+        function exportCollectionToInput(idx) {
+            const article = collections[idx];
+            if (!article || !article.content) {
+                return showAutoCloseAlert('该收藏文章无内容');
+            }
+            const inputBox = document.getElementById('contentInput');
+            inputBox.value = article.content;
+            lastParseRawText = article.content;
+            inputBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            inputBox.focus();
+            showAutoCloseAlert(`【${article.title}】已导出到输入框，可直接解析`);
+        }
+
+        function renderCollectionList() {
+            const listEl = document.getElementById('collectionList');
+            if (collections.length === 0) {
+                listEl.innerHTML = '<div class="tip">暂无收藏文章，点击「保存文章」添加</div>';
+                return;
+            }
+            listEl.innerHTML = '';
+            collections.forEach((item, idx) => {
+                const collItem = document.createElement('div');
+                collItem.className = 'collection-item';
+                collItem.draggable = true;
+                collItem.innerHTML = `
+                    <span class="drag-handle">☰</span>
+                    <span class="collection-name">${item.title}</span>
+                    <div class="collection-actions">
+                        <button class="play-btn" data-index="${idx}">加载</button>
+                        <button class="rename-btn" data-index="${idx}">重命名</button>
+                        <button class="export-btn" data-index="${idx}">导出</button>
+                        <button class="delete-collection-btn" data-index="${idx}">删除</button>
+                    </div>
+                `;
+                listEl.appendChild(collItem);
+            });
+            bindCollectionItemEvents();
+        }
+        function bindCollectionItemEvents() {
+            document.querySelectorAll('.collection-item .play-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = +btn.dataset.index;
+                    const data = collections[idx];
+                    document.getElementById('contentInput').value = data.content;
+                    lastParseRawText = data.content;
+                    document.getElementById('parseBtn').click();
+                }
+            });
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = +btn.dataset.index;
+                    exportCollectionToInput(idx);
+                }
+            });
+            document.querySelectorAll('.rename-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = +btn.dataset.index;
+                    const oldName = collections[idx].title;
+                    const newName = prompt('输入新标题', oldName);
+                    if (newName && newName.trim() !== '') {
+                        collections[idx].title = newName.trim();
+                        saveCollections();
+                        renderCollectionList();
+                        showAutoCloseAlert('重命名成功');
+                    }
+                }
+            });
+            document.querySelectorAll('.delete-collection-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = +btn.dataset.index;
+                    if (!confirm('确定删除？')) return;
+                    collections.splice(idx,1);
+                    saveCollections();
+                    renderCollectionList();
+                    showAutoCloseAlert('已删除');
+                }
+            });
+        }
+        function saveCollections() {
+            localStorage.setItem('ttsArticleCollections', JSON.stringify(collections));
+        }
+
+        window.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
