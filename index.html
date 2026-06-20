@@ -411,7 +411,7 @@
     </div>
 
     <div class="input-area">
-        <div class="tip">粘贴格式：每句基础格式"西语→翻译"（2行，允许空行间隔），可选添加"语法分析"（第3行，前缀含"语法分析"）</div>
+        <div class="tip">粘贴格式：每句基础格式"西语→翻译"（2行，允许空行间隔），可选添加"语法分析"（第3行，前缀含"语法分析"，支持HTML标签）</div>
         <textarea id="contentInput" placeholder="请粘贴西语句子、翻译（可选语法分析），按格式排列即可"></textarea>
         <div style="display:flex; gap:8px; width:calc(100% - 40px);">
             <button id="parseBtn">生成内容</button>
@@ -429,7 +429,7 @@
 
         <button id="readAllBtn" disabled>整篇朗读</button>
         <button id="wholePlayModeBtn" disabled>整篇单次</button>
-        <button id="readModeBtn" class="read-mode-btn" disabled>当前：只读句子</button>
+        <button id="readModeBtn" class="read-mode-btn" disabled>当前：西语</button>
         <label>语速：</label>
         <select id="rateSelect">
             <option value="0.2">0.2倍</option>
@@ -902,7 +902,7 @@
                 const raw = document.getElementById('contentInput').value.trim();
                 if (!raw) return showAutoCloseAlert('请输入文本');
                 lastParseRawText = raw;
-                const lines = raw.replace(/\r\n/g,'\n').split('\n').map(s=>s.trim()).filter(s=>s);
+                const lines = raw.replace(/\r\n/g,'\n').split('\n').map(s=>s).filter(s=>s.trim()!=='');
                 const listEl = document.getElementById('sentenceList');
                 listEl.innerHTML = '';
                 grammarData.clear();
@@ -911,11 +911,11 @@
                 const total = lines.length;
                 while (i < total) {
                     if (i+1 >= total) return showAutoCloseAlert('格式错误，缺少翻译'), listEl.innerHTML='';
-                    const es = lines[i];
-                    const cn = lines[i+1];
+                    const es = lines[i].trim();
+                    const cn = lines[i+1].trim();
                     let gram = '';
-                    if (i+2 < total && lines[i+2].includes('语法分析')) {
-                        gram = lines[i+2].replace(/语法分析[:：]?/g,'').trim();
+                    if (i+2 < total && lines[i+2].trim().startsWith('语法分析')) {
+                        gram = lines[i+2].replace(/^语法分析[:：]?/,'').trim();
                         i +=3;
                     } else i +=2;
                     grammarData.set(idx, gram);
@@ -1189,73 +1189,75 @@
         function renderCollectionList() {
             const listEl = document.getElementById('collectionList');
             if (collections.length === 0) {
-                listEl.innerHTML = '<div class="tip">暂无收藏文章，点击「保存文章」添加</div>';
-                return;
-            }
-            listEl.innerHTML = '';
-            collections.forEach((item, idx) => {
-                const collItem = document.createElement('div');
-                collItem.className = 'collection-item';
-                collItem.draggable = true;
-                collItem.innerHTML = `
-                    <span class="drag-handle">☰</span>
-                    <span class="collection-name">${item.title}</span>
-                    <div class="collection-actions">
-                        <button class="play-btn" data-index="${idx}">加载</button>
-                        <button class="rename-btn" data-index="${idx}">重命名</button>
-                        <button class="export-btn" data-index="${idx}">导出</button>
-                        <button class="delete-collection-btn" data-index="${idx}">删除</button>
-                    </div>
-                `;
-                listEl.appendChild(collItem);
-            });
-            bindCollectionItemEvents();
+            listEl.innerHTML = '<div class="tip">暂无收藏文章，点击「保存文章」添加</div>';
+            return;
         }
-        function bindCollectionItemEvents() {
-            document.querySelectorAll('.collection-item .play-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const idx = +btn.dataset.index;
-                    const data = collections[idx];
-                    document.getElementById('contentInput').value = data.content;
-                    lastParseRawText = data.content;
-                    document.getElementById('parseBtn').click();
-                }
-            });
-            document.querySelectorAll('.export-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const idx = +btn.dataset.index;
-                    exportCollectionToInput(idx);
-                }
-            });
-            document.querySelectorAll('.rename-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const idx = +btn.dataset.index;
-                    const oldName = collections[idx].title;
-                    const newName = prompt('输入新标题', oldName);
-                    if (newName && newName.trim() !== '') {
-                        collections[idx].title = newName.trim();
-                        saveCollections();
-                        renderCollectionList();
-                        showAutoCloseAlert('重命名成功');
-                    }
-                }
-            });
-            document.querySelectorAll('.delete-collection-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const idx = +btn.dataset.index;
-                    if (!confirm('确定删除？')) return;
-                    collections.splice(idx,1);
+        listEl.innerHTML = '';
+        collections.forEach((item, idx) => {
+            const collItem = document.createElement('div');
+            collItem.className = 'collection-item';
+            collItem.draggable = true;
+            collItem.innerHTML = `
+                <span class="drag-handle">☰</span>
+                <span class="collection-name">${item.title}</span>
+                <div class="collection-actions">
+                    <button class="play-btn" data-index="${idx}">加载</button>
+                    <button class="rename-btn" data-index="${idx}">重命名</button>
+                    <button class="export-btn" data-index="${idx}">导出</button>
+                    <button class="delete-collection-btn" data-index="${idx}">删除</button>
+                </div>
+            `;
+            listEl.appendChild(collItem);
+        });
+        bindCollectionItemEvents();
+    }
+    
+    function bindCollectionItemEvents() {
+        document.querySelectorAll('.collection-item .play-btn').forEach(btn => {
+            btn.onclick = () => {
+                const idx = +btn.dataset.index;
+                const data = collections[idx];
+                document.getElementById('contentInput').value = data.content;
+                lastParseRawText = data.content;
+                document.getElementById('parseBtn').click();
+            }
+        });
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.onclick = () => {
+                const idx = +btn.dataset.index;
+                exportCollectionToInput(idx);
+            }
+        });
+        document.querySelectorAll('.rename-btn').forEach(btn => {
+            btn.onclick = () => {
+                const idx = +btn.dataset.index;
+                const oldName = collections[idx].title;
+                const newName = prompt('输入新标题', oldName);
+                if (newName && newName.trim() !== '') {
+                    collections[idx].title = newName.trim();
                     saveCollections();
                     renderCollectionList();
-                    showAutoCloseAlert('已删除');
+                    showAutoCloseAlert('重命名成功');
                 }
-            });
-        }
-        function saveCollections() {
-            localStorage.setItem('ttsArticleCollections', JSON.stringify(collections));
-        }
+            }
+        });
+        document.querySelectorAll('.delete-collection-btn').forEach(btn => {
+            btn.onclick = () => {
+                const idx = +btn.dataset.index;
+                if (!confirm('确定删除？')) return;
+                collections.splice(idx,1);
+                saveCollections();
+                renderCollectionList();
+                showAutoCloseAlert('已删除');
+            }
+        });
+    }
 
-        window.addEventListener('DOMContentLoaded', initialize);
-    </script>
+    function saveCollections() {
+        localStorage.setItem('ttsArticleCollections', JSON.stringify(collections));
+    }
+
+    window.addEventListener('DOMContentLoaded', initialize);
+</script>
 </body>
 </html>
